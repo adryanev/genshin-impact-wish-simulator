@@ -4,10 +4,12 @@ import Details from './details'
 import Wish from './wish'
 import WishResults from './wish-results'
 import Inventory from './inventory'
-import BalladInGoblets from '../models/ballad-in-goblets'
+import SecretumSecretorum from '../models/secretum-secretorum'
 import BeginnersWish from '../models/beginners-wish'
 import EpitomeInvocation from '../models/epitome-invocation'
 import WanderlustInvocation from '../models/wanderlust-invocation'
+import { version } from '../../package.json';
+
 export default class App extends Component {
   constructor(props) {
     super(props)
@@ -16,18 +18,21 @@ export default class App extends Component {
       currentDetails: 'beginners-wish',
       selectedWish: 'beginnersWish',
       isBeginnersWishLimited: false,
+      isBeginnersWishOver10: false,
       inventory: {},
       wasDisclaimerSeen: false,
       currentWishes: []
     }
     this.setView = this.setView.bind(this)
     this.setBeginnersWishDisable = this.setBeginnersWishDisable.bind(this)
-    this.balladInGoblets = new BalladInGoblets()
-    this.beginnersWish = new BeginnersWish(this.setBeginnersWishDisable)
+    this.setBeginnersWishOver10 = this.setBeginnersWishOver10.bind(this)
+    this.secretumSecretorum = new SecretumSecretorum()
+    this.beginnersWish = new BeginnersWish(this.setBeginnersWishDisable, this.setBeginnersWishOver10)
     this.epitomeInvocation = new EpitomeInvocation()
     this.wanderlustInvocation = new WanderlustInvocation()
   }
   componentDidMount() {
+    this.clearLocalStorageEveryNewBuild();
     this.loadData()
   }
   setView(view) {
@@ -50,9 +55,9 @@ export default class App extends Component {
   setSelectedWish(selectedWish) {
     this.setState({selectedWish})
   }
-  wish(selectedWish) {
+  wish(selectedWish, isOneWish = false) {
     this.setState({
-      currentWishes: this[selectedWish].roll(),
+      currentWishes: isOneWish ? [this[selectedWish].rollOnce()] : this[selectedWish].roll(),
       selectedWish
     }, () => this.setView('wish'))
   }
@@ -74,28 +79,31 @@ export default class App extends Component {
     }
     this.setState({inventory, currentWishes: []}, this.saveData)
   }
-  reset() {
+  reset(previouslySelectedWish) {
     this.beginnersWish.attemptsCount = 0
     this.beginnersWish.guaranteedNoelle = true
-    this.balladInGoblets.attemptsCount = 0
+    this.secretumSecretorum.attemptsCount = 0
     this.wanderlustInvocation.attemptsCount = 0
     this.epitomeInvocation.attemptsCount = 0
     this.setState({
       isBeginnersWishLimited: false,
-      currentDetails: 'beginners-wish',
+      isBeginnersWishOver10: false,
+      selectedWish: previouslySelectedWish,
       inventory: {}
     }, this.saveData)
   }
   saveData() {
     const {
       isBeginnersWishLimited,
+      isBeginnersWishOver10,
       inventory
     } = this.state
     const data = {
       isBeginnersWishLimited,
+      isBeginnersWishOver10,
       inventory,
       beginnersWishCount: this.beginnersWish.attemptsCount,
-      balladInGobletsCount: this.balladInGoblets.attemptsCount,
+      secretumSecretorum: this.secretumSecretorum.attemptsCount,
       wanderlustInvocationCount: this.wanderlustInvocation.attemptsCount,
       epitomeInvocationCount: this.epitomeInvocation.attemptsCount,
     }
@@ -106,28 +114,43 @@ export default class App extends Component {
     if(!data) return;
     const {
       isBeginnersWishLimited,
-      inventory,
+      isBeginnersWishOver10,
+      inventory
     } = data
     this.beginnersWish.attempts = data.beginnersWishCount
-    this.balladInGoblets.attempts = data.balladInGobletsCount
+    this.secretumSecretorum.attempts = data.secretumSecretorum
     this.wanderlustInvocation.attempts = data.wanderlustInvocationCount
     this.epitomeInvocation.attempts = data.epitomeInvocationCount
     this.setState({
       isBeginnersWishLimited,
+      isBeginnersWishOver10,
       inventory
     }, this.backToHome)
   }
   setBeginnersWishDisable(isBeginnersWishLimited) {
     this.setState({
       isBeginnersWishLimited,
-      currentDetails: isBeginnersWishLimited ? 'ballad-in-goblets' : 'beginners-wish'
+      currentDetails: isBeginnersWishLimited ? 'secretum-secretorum' : 'beginners-wish'
     })
+  }
+  setBeginnersWishOver10() {
+    this.setState({isBeginnersWishOver10: true})
+  }
+  clearLocalStorageEveryNewBuild() {
+    // If there is a new update or the user does not have the 'appVersion', we'll give one.
+    // We will also reset the local storage every time a new build occurs to avoid cache problems.
+    // We have to make sure to always bump the version number every time a new banner comes out, though.
+    if (!localStorage.getItem("appVersion") || localStorage.getItem("appVersion") !== version) {
+      localStorage.clear();
+      localStorage.setItem("appVersion", version);
+    }
   }
   render () {
     const {
           currentDetails,
           view,
           isBeginnersWishLimited,
+          isBeginnersWishOver10,
           inventory,
           wasDisclaimerSeen,
           selectedDetail,
@@ -141,6 +164,7 @@ export default class App extends Component {
               setSelectedWish={this.setSelectedWish.bind(this)}
               selectedBanner={currentDetails}
               isBeginnersWishLimited={isBeginnersWishLimited}
+              isBeginnersWishOver10={isBeginnersWishOver10}
               wasDisclaimerSeen={wasDisclaimerSeen}
               wish={this.wish.bind(this)}
               hideModal={this.hideModal.bind(this)}
@@ -155,6 +179,7 @@ export default class App extends Component {
             return <Wish
             setView={this.setView}
             is5StarItem={currentWishes.some(item => item.rating === 5)}
+            isSingleItem={currentWishes.length === 1}
             />
           case 'wish-results':
             return <WishResults

@@ -20,6 +20,17 @@ A React web application to simulate Genshin Impact gacha in the browser
   All product names, logos, and brands are property of their respective owners in the United States and/or other countries.
 </p>
 
+#### Special Thanks
+
+Thank you to all the supporters on Reddit, everyone's kind words mean a lot and the feedback has been awesome.
+
+Thank you to [lauslim12](https://github.com/lauslim12), your contributions have been an amazing help.
+
+Thanks to the following redditors who sent me their 5 Star animation videos.
+
+- /u/ShiroYashaa
+- /u/a_truly_masterpiece
+
 ## Technologies Used
 - React
 - Webpack
@@ -27,8 +38,9 @@ A React web application to simulate Genshin Impact gacha in the browser
 - Bootstrap 4
 - Mocha
 - Chai
+- Cypress
 
-## Live Demo
+## Live
 
 Try the application live at [https://gi-wish-simulator.uzairashraf.dev/](https://gi-wish-simulator.uzairashraf.dev/)
 
@@ -75,6 +87,7 @@ Try the application live at [https://gi-wish-simulator.uzairashraf.dev/](https:/
 #### System Requirements
 
 - NPM 6 or higher
+- Node 10 or higher
 
 #### Getting Started
 
@@ -91,23 +104,40 @@ Try the application live at [https://gi-wish-simulator.uzairashraf.dev/](https:/
     npm install
     ```
 
-1. Confirm all banners are working appropriately
+1. Confirm application is working appropriately
 
     ```shell
     npm run test
     ```
 
+    **For some operating systems using wsl may not be able to run the full test script and may need to run them individually. If that is the case run the following commands below.**
+
+    Development server
+    ```shell
+    npm start
+    ```
+
+    Unit tests
+    ```shell
+    npm run test:mocha
+    ```
+
+    Integration tests
+    ```shell
+    npm run cypress
+    ```
+
 1. Run the webpack development server.
 
     ```shell
-    npm run dev
+    npm start
     ```
 
 1. Once started you can view the application by opening http://localhost:3000 in your browser.
 
 #### Testing
 
-1. Any banner added or modified will need to have test coverage.  See `test/test.js` file for test suite.
+1. Any banner added or modified will require additions to the unit and integration tests.  Please check the `test/` and `cypress/` directories.
 
 1. Run tests
 
